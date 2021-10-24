@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node mongo</title>
+</head>
+
+<body>
+    <h1>Look mom i have done it</h1>
+    <form id="formsubmit">
+        <input placeholder="Name" id="name" value="" name="name" type="text">
+        <br>
+        <br>
+        <input placeholder="Price" id="price" value="" name="price" type="text">
+        <br>
+        <br>
+        <input placeholder="Quantity" id="quantity" value="" name="quantity" type="text">
+        <br>
+        <br>
+        <input type="submit" value="add">
+        <!-- <a href="/products">products</a> -->
+
+    </form>
+    <p id="message"></p>
+    <p id="add"></p>
+    <div id="allproduct">
+
+    </div>
+
+    <div id="updated">
+
+    </div>
+    <p id="updatedSuccess"></p>
+    <script>
+        // adding the product
+        const formsubmit = document.getElementById("formsubmit")
+
+        formsubmit.addEventListener('submit', () => {
+                const name = document.getElementById("name").value;
+                const price = document.getElementById("price").value;
+                const quantity = document.getElementById("quantity").value;
+                // console.log(name, price, quantity);
+
+                fetch('/addproduct', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        price: price,
+                        quantity: quantity
+                    })
+                })
+
+
+            })
+            // deleting the product
+        const deleteItem = (event, e) => {
+
+            fetch('/delete/' + e, {
+                    method: 'DELETE'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('message').innerText = data.message;
+                        event.target.parentNode.style.display = 'none';
+                    } else {
+                        document.getElementById('message').innerText = data.message;
+                    }
+                })
+        }
+
+        const loaditem = (e) => {
+                // console.log('clicked', e);
+                fetch('/product/' + e)
+                    .then(res => res.json())
+                    .then(data => {
+                        const update = document.getElementById('updated');
+                        update.innerHTML = `
+                    <h3>UPdate ID: ${data._id}</h3>
+                    price: <input type="text" value='${data.price}' id="new_price"> 
+                    Quantity: <input type="text" value='${data.quantity}' id="new_quantity"> 
+                    <button onclick=(updateItem('${data._id}'))>Save</button>
+                   `
+
+                    })
+            }
+            // updating data 
+        const updateItem = (id) => {
+                const price = document.getElementById("new_price").value;
+                const quantity = document.getElementById("new_quantity").value
+                const product = {
+                        id,
+                        price,
+                        quantity
+                    }
+                    // console.log(product);
+                fetch('/update/' + id, {
+                        method: 'PATCH',
+                        body: JSON.stringify(product),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById("updatedSuccess").innerText = data.message;
+                            setTimeout(() => {
+                                window.location.reload()
+                            }, 1000);
+                        } else {
+                            document.getElementById("updatedSuccess").innerText = data.message;
+                        }
+                    })
+            }
+            // reading the product
+        const getTheData = () => (
+            fetch('/products')
+            .then(res => res.json())
+            .then(data => {
+                const allproduct = document.getElementById('allproduct')
+                data.forEach(product => {
+                    const item = document.createElement('p')
+                    item.innerHTML = `${product.name} Price ${product.price} 
+                        Quantity: ${product.quantity} 
+                        <button type="button" onclick=(deleteItem(event,'${product._id}'))>delete</button> 
+                        <button type="button" onclick=(loaditem('${product._id}'))>edit</button>`
+                    allproduct.appendChild(item)
+                })
+            })
+        )
+        getTheData()
+    </script>
+</body>
+
+</html>
